@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+CONFIG=$1
+LIVE=$2
+
+build() {
+    swift build -Xswiftc -O --configuration ${CONFIG}
+}
+
+install_application() {
+    cp ./.build/${CONFIG}/libSTSLibrary.so /usr/lib/libSTSLibrary.so
+    cp ./.build/${CONFIG}/STSLibrary.swiftmodule /usr/lib/STSLibrary.swiftmodule
+    cp ./.build/${CONFIG}/STSApplication /usr/bin/STSApplication
+}
+
+run_application() {
+    /usr/bin/STSApplication
+}
+
+build_and_run() {
+    build && install_application && run_application
+}
+
+watch_files() {
+    inotifywait --quiet --recursive --monitor --event modify --format "%w%f" . \
+    | while read file change; do
+        if [[ ${file} = *".swift" ]] ; then
+            echo "Changes in file: $file, building..."
+            if [[ ${file} = *"Package.swift" ]] ; then
+                swift package update
+            fi
+            build_and_run
+            echo "Waiting for changes to run application again."
+        fi
+    done
+}
+
+entrypoint() {
+    build_and_run
+}
+
+live_entrypoint() {
+    run_application
+    echo "Waiting for changes to run application again."
+    watch_files &
+    wait
+}
+
+if [ ${LIVE} = true ] ; then
+    live_entrypoint
+else
+    entrypoint
+fi

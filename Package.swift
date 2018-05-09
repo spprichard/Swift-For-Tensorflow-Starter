@@ -12,13 +12,12 @@ let package = Package(
         )
     ],
     dependencies: [
-        //example:
-        // .package(url: "https://github.com/ReactiveX/RxSwift.git", "4.0.0" ..< "5.0.0")
+	.package(url: "https://github.com/vapor/vapor.git", from: "3.0.0"),
     ],
     targets: [
         .target(
             name: "STSLibrary",
-            dependencies: []),
+            dependencies: ["Vapor"]),
         .target(
             name: "STSApplication",
             dependencies: ["STSLibrary"]),
